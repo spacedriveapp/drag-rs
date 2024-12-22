@@ -1,9 +1,0 @@
-[package]
-name = "winit-app"
-version = "0.0.0"
-publish = false
-edition = "2021"
-
-[target."cfg(not(target_os = \"linux\"))".dependencies]
-drag.workspace = true
-winit.workspace = true

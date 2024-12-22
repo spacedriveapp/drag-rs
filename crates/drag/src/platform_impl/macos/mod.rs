@@ -53,37 +53,49 @@ impl NSString {
 pub fn start_drag<W: HasWindowHandle, F: Fn(DragResult, CursorPosition) + Send + 'static>(
     handle: &W,
     item: DragItem,
-    image: Image,
+    image: Option<Image>,
     on_drop_callback: F,
     options: Options,
 ) -> crate::Result<()> {
     if let Ok(RawWindowHandle::AppKit(w)) = handle.window_handle().map(|h| h.as_raw()) {
         unsafe {
             let window: id = msg_send![w.ns_view.as_ptr() as id, window];
-            // wry replaces the ns_view so we don't really use AppKitWindowHandle::ns_view
             let ns_view: id = msg_send![window, contentView];
 
             let mouse_location: NSPoint = msg_send![window, mouseLocationOutsideOfEventStream];
             let current_position: NSPoint = msg_send![ns_view, backingAlignedRect: NSRect::new(mouse_location, NSSize::new(0., 0.)) options: NSAlignmentOptions::NSAlignAllEdgesOutward];
 
-            let img: id = msg_send![class!(NSImage), alloc];
-            let img: id = match image {
-                Image::File(path) => {
-                    if !path.exists() {
-                        return Err(crate::Error::ImageNotFound);
+            let img: id = if let Some(image) = image {
+                let img: id = msg_send![class!(NSImage), alloc];
+                match image {
+                    Image::File(path) => {
+                        if !path.exists() {
+                            return Err(crate::Error::ImageNotFound);
+                        }
+                        NSImage::initByReferencingFile_(
+                            img,
+                            NSString::new(&path.to_string_lossy()).0,
+                        )
                     }
-                    NSImage::initByReferencingFile_(img, NSString::new(&path.to_string_lossy()).0)
+                    Image::Raw(bytes) => {
+                        let data = NSData::dataWithBytes_length_(
+                            nil,
+                            bytes.as_ptr() as *const std::os::raw::c_void,
+                            bytes.len() as u64,
+                        );
+                        NSImage::initWithData_(NSImage::alloc(nil), data)
+                    }
                 }
-                Image::Raw(bytes) => {
-                    let data = NSData::dataWithBytes_length_(
-                        nil,
-                        bytes.as_ptr() as *const std::os::raw::c_void,
-                        bytes.len() as u64,
-                    );
-                    NSImage::initWithData_(NSImage::alloc(nil), data)
-                }
+            } else {
+                nil
             };
-            let image_size: NSSize = img.size();
+
+            let image_size: NSSize = if img != nil {
+                msg_send![img, size]
+            } else {
+                NSSize::new(0., 0.)
+            };
+
             let image_rect = NSRect::new(
                 NSPoint::new(
                     current_position.x - image_size.width / 2.,
@@ -92,6 +104,7 @@ pub fn start_drag<W: HasWindowHandle, F: Fn(DragResult, CursorPosition) + Send +
                 image_size,
             );
 
+            // Rest of the code remains the same, just use `img` instead of `img` directly
             let dragging_items: id = msg_send![class!(NSMutableArray), array];
 
             match item {

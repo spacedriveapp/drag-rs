@@ -213,7 +213,7 @@ impl IDataObject_Impl for DataObject {
 pub fn start_drag<W: HasWindowHandle, F: Fn(DragResult, CursorPosition) + Send + 'static>(
     handle: &W,
     item: DragItem,
-    image: Image,
+    image: Option<Image>,
     on_drop_callback: F,
     _options: Options,
 ) -> crate::Result<()> {
@@ -237,11 +237,13 @@ pub fn start_drag<W: HasWindowHandle, F: Fn(DragResult, CursorPosition) + Send +
                 let drop_source: IDropSource = DropSource::new().into();
 
                 unsafe {
-                    if let Some(drag_image) = get_drag_image(image) {
-                        if let Ok(helper) =
-                            create_instance::<IDragSourceHelper>(&CLSID_DragDropHelper)
-                        {
-                            let _ = helper.InitializeFromBitmap(&drag_image, &data_object);
+                    if let Some(img) = image {
+                        if let Some(drag_image) = get_drag_image(img) {
+                            if let Ok(helper) =
+                                create_instance::<IDragSourceHelper>(&CLSID_DragDropHelper)
+                            {
+                                let _ = helper.InitializeFromBitmap(&drag_image, &data_object);
+                            }
                         }
                     }
 
@@ -277,11 +279,13 @@ pub fn start_drag<W: HasWindowHandle, F: Fn(DragResult, CursorPosition) + Send +
                 let drop_source: IDropSource = DummyDropSource::new().into();
 
                 unsafe {
-                    if let Some(drag_image) = get_drag_image(image) {
-                        if let Ok(helper) =
-                            create_instance::<IDragSourceHelper>(&CLSID_DragDropHelper)
-                        {
-                            let _ = helper.InitializeFromBitmap(&drag_image, &data_object);
+                    if let Some(img) = image {
+                        if let Some(drag_image) = get_drag_image(img) {
+                            if let Ok(helper) =
+                                create_instance::<IDragSourceHelper>(&CLSID_DragDropHelper)
+                            {
+                                let _ = helper.InitializeFromBitmap(&drag_image, &data_object);
+                            }
                         }
                     }
 

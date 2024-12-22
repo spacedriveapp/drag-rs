@@ -81,17 +81,18 @@ pub async fn start_drag<R: Runtime>(
     app: AppHandle<R>,
     window: WebviewWindow<R>,
     item: DragItem,
-    image: Image,
+    image: Option<Image>,
     on_event: Channel<CallbackResult>,
 ) -> Result<()> {
     let (tx, rx) = channel();
 
     let image = match image {
-        Image::Raw(r) => r,
-        Image::Base64(b) => {
+        Some(Image::Raw(r)) => Some(r),
+        Some(Image::Base64(b)) => {
             use base64::Engine;
-            drag::Image::Raw(base64::engine::general_purpose::STANDARD.decode(b.0)?)
-        }
+            Some(drag::Image::Raw(base64::engine::general_purpose::STANDARD.decode(b.0)?))
+        },
+        None => None,
     };
 
     app.run_on_main_thread(move || {
