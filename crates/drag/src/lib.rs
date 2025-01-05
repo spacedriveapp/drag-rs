@@ -140,9 +140,30 @@ pub enum DragItem {
     },
 }
 
+#[derive(Debug, Clone, Copy)]
+#[repr(u64)]
+pub enum DragMode {
+    Copy = 1,  // NSDragOperationCopy
+    Move = 16, // NSDragOperationMove
+    Smart = 0, // Special case handled in dragging_session
+}
+
+impl Default for DragMode {
+    fn default() -> Self {
+        DragMode::Copy
+    }
+}
+
+unsafe impl objc::Encode for DragMode {
+    fn encode() -> objc::Encoding {
+        unsafe { objc::Encoding::from_str("Q") } // unsigned long long
+    }
+}
+
 #[derive(Default)]
 pub struct Options {
     pub skip_animatation_on_cancel_or_failure: bool,
+    pub mode: DragMode,
 }
 
 /// An image definition.
