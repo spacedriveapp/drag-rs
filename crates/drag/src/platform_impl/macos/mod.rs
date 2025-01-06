@@ -317,3 +317,7 @@ pub fn start_drag<W: HasWindowHandle, F: Fn(DragResult, CursorPosition) + Send +
         Err(crate::Error::UnsupportedWindowHandle)
     }
 }
+
+pub fn cancel_drag() {
+    SHOULD_CANCEL_DRAG.store(true, Ordering::SeqCst);
+}
