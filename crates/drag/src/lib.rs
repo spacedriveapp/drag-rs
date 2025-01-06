@@ -89,6 +89,7 @@ use std::path::PathBuf;
 
 mod platform_impl;
 
+pub use platform_impl::cancel_drag;
 pub use platform_impl::start_drag;
 
 pub type Result<T> = std::result::Result<T, Error>;
