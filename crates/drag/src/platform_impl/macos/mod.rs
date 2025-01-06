@@ -50,13 +50,25 @@ impl NSString {
     }
 }
 
+pub struct DragSession {
+    ns_view: id,
+}
+
+impl DragSession {
+    pub fn cancel(&self) {
+        unsafe {
+            let _: () = msg_send![self.ns_view, concludeDragOperation];
+        }
+    }
+}
+
 pub fn start_drag<W: HasWindowHandle, F: Fn(DragResult, CursorPosition) + Send + 'static>(
     handle: &W,
     item: DragItem,
     image: Image,
     on_drop_callback: F,
     options: Options,
-) -> crate::Result<()> {
+) -> crate::Result<DragSession> {
     if let Ok(RawWindowHandle::AppKit(w)) = handle.window_handle().map(|h| h.as_raw()) {
         unsafe {
             let window: id = msg_send![w.ns_view.as_ptr() as id, window];
@@ -289,9 +301,9 @@ pub fn start_drag<W: HasWindowHandle, F: Fn(DragResult, CursorPosition) + Send +
             (*source).set_ivar("drag_mode", options.mode);
 
             let _: () = msg_send![ns_view, beginDraggingSessionWithItems: dragging_items event: drag_event source: source];
-        }
 
-        Ok(())
+            Ok(DragSession { ns_view })
+        }
     } else {
         Err(crate::Error::UnsupportedWindowHandle)
     }
