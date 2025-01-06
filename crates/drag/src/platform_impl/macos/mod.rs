@@ -235,9 +235,8 @@ pub fn start_drag<W: HasWindowHandle, F: Fn(DragResult, CursorPosition) + Send +
                             let () = msg_send![dragging_session, setAnimatesToStartingPositionsOnCancelOrFail: *animates];
 
                             match mode {
-                                DragMode::Copy => 1,   // NSDragOperationCopy
-                                DragMode::Move => 16,  // NSDragOperationMove
-                                DragMode::Smart => 17, // NSDragOperationMove | NSDragOperationCopy
+                                DragMode::Copy => 1,  // NSDragOperationCopy
+                                DragMode::Move => 16, // NSDragOperationMove
                             }
                         }
                     }
@@ -245,13 +244,12 @@ pub fn start_drag<W: HasWindowHandle, F: Fn(DragResult, CursorPosition) + Send +
                     extern "C" fn dragging_session_end(
                         this: &Object,
                         _: Sel,
-                        dragging_session: id,
+                        _dragging_session: id,
                         ended_at_point: NSPoint,
                         operation: NSUInteger,
                     ) {
                         unsafe {
                             let callback = this.get_ivar::<*mut c_void>("on_drop_ptr");
-                            let mode = *this.get_ivar::<DragMode>("drag_mode");
 
                             let mouse_location = CursorPosition {
                                 x: ended_at_point.x as i32,
@@ -265,19 +263,10 @@ pub fn start_drag<W: HasWindowHandle, F: Fn(DragResult, CursorPosition) + Send +
                                 // NSDragOperationNone
                                 callback_closure(DragResult::Cancel, mouse_location);
                             } else {
-                                // For Smart mode, if move operation failed, fall back to copy
-                                if matches!(mode, DragMode::Smart) && operation != 16 {
-                                    let pasteboard: id =
-                                        msg_send![dragging_session, draggingPasteboard];
-                                    let _: () = msg_send![pasteboard, setOperationMask:1];
-                                    // Force copy operation
-                                }
                                 callback_closure(DragResult::Dropped, mouse_location);
                             }
 
-                            drop(Box::from_raw(
-                                *callback as *mut Box<dyn Fn(DragResult, CursorPosition)>,
-                            ));
+                            drop(Box::from_raw(*callback as *mut Box<dyn Fn(DragResult)>));
                         }
                     }
 

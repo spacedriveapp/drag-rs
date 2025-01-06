@@ -145,7 +145,6 @@ pub enum DragItem {
 pub enum DragMode {
     Copy = 1,  // NSDragOperationCopy
     Move = 16, // NSDragOperationMove
-    Smart = 0, // Special case handled in dragging_session
 }
 
 impl Default for DragMode {
