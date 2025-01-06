@@ -51,13 +51,13 @@ impl NSString {
 }
 
 pub struct DragSession {
-    ns_view: id,
+    dragging_session: id,
 }
 
 impl DragSession {
     pub fn cancel(&self) {
         unsafe {
-            let _: () = msg_send![self.ns_view, concludeDragOperation];
+            let _: () = msg_send![self.dragging_session, endDraggingSession];
         }
     }
 }
@@ -300,9 +300,9 @@ pub fn start_drag<W: HasWindowHandle, F: Fn(DragResult, CursorPosition) + Send +
             );
             (*source).set_ivar("drag_mode", options.mode);
 
-            let _: () = msg_send![ns_view, beginDraggingSessionWithItems: dragging_items event: drag_event source: source];
+            let dragging_session: id = msg_send![ns_view, beginDraggingSessionWithItems: dragging_items event: drag_event source: source];
 
-            Ok(DragSession { ns_view })
+            Ok(DragSession { dragging_session })
         }
     } else {
         Err(crate::Error::UnsupportedWindowHandle)
