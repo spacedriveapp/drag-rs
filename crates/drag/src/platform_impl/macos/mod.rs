@@ -234,9 +234,10 @@ pub fn start_drag<W: HasWindowHandle, F: Fn(DragResult, CursorPosition) + Send +
                             let mode = *this.get_ivar::<DragMode>("drag_mode");
                             let () = msg_send![dragging_session, setAnimatesToStartingPositionsOnCancelOrFail: *animates];
 
+                            // Let the system decide based on volume/destination
                             match mode {
-                                DragMode::Copy => 1,  // NSDragOperationCopy
-                                DragMode::Move => 16, // NSDragOperationMove
+                                DragMode::Move => NSUInteger::MAX, // Allow all operations
+                                DragMode::Copy => 1,               // Force copy
                                 DragMode::Smart => {
                                     if context == 0 {
                                         1 // Local context: Copy
