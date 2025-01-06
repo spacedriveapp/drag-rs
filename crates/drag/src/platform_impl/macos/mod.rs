@@ -235,15 +235,9 @@ pub fn start_drag<W: HasWindowHandle, F: Fn(DragResult, CursorPosition) + Send +
                             let () = msg_send![dragging_session, setAnimatesToStartingPositionsOnCancelOrFail: *animates];
 
                             match mode {
-                                DragMode::Copy => 1,  // NSDragOperationCopy
-                                DragMode::Move => 16, // NSDragOperationMove
-                                DragMode::Smart => {
-                                    if context == 0 {
-                                        1 // Local context: Copy
-                                    } else {
-                                        NSUInteger::MAX // External context: All operations
-                                    }
-                                }
+                                DragMode::Copy => 1,   // NSDragOperationCopy
+                                DragMode::Move => 16,  // NSDragOperationMove
+                                DragMode::Smart => 17, // NSDragOperationMove | NSDragOperationCopy
                             }
                         }
                     }
