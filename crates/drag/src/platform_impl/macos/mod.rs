@@ -2,7 +2,10 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-License-Identifier: MIT
 
-use std::ffi::{c_char, c_void};
+use std::{
+    ffi::{c_char, c_void},
+    sync::atomic::{AtomicBool, Ordering},
+};
 
 use cocoa::{
     appkit::{NSAlignmentOptions, NSApp, NSEvent, NSEventModifierFlags, NSEventType, NSImage},
@@ -61,6 +64,8 @@ impl DragSession {
         }
     }
 }
+
+static SHOULD_CANCEL_DRAG: AtomicBool = AtomicBool::new(false);
 
 pub fn start_drag<W: HasWindowHandle, F: Fn(DragResult, CursorPosition) + Send + 'static>(
     handle: &W,
@@ -246,9 +251,13 @@ pub fn start_drag<W: HasWindowHandle, F: Fn(DragResult, CursorPosition) + Send +
                             let mode = *this.get_ivar::<DragMode>("drag_mode");
                             let () = msg_send![dragging_session, setAnimatesToStartingPositionsOnCancelOrFail: *animates];
 
-                            match mode {
-                                DragMode::Copy => 1,  // NSDragOperationCopy
-                                DragMode::Move => 16, // NSDragOperationMove
+                            if SHOULD_CANCEL_DRAG.load(Ordering::SeqCst) {
+                                0 // NSDragOperationNone
+                            } else {
+                                match mode {
+                                    DragMode::Copy => 1,  // NSDragOperationCopy
+                                    DragMode::Move => 16, // NSDragOperationMove
+                                }
                             }
                         }
                     }
