@@ -12,4 +12,5 @@ mod platform;
 #[path = "macos/mod.rs"]
 mod platform;
 
+pub use platform::cancel_drag;
 pub use platform::start_drag;
