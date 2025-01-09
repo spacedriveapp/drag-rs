@@ -53,27 +53,13 @@ impl NSString {
     }
 }
 
-pub struct DragSession {
-    dragging_session: id,
-}
-
-impl DragSession {
-    pub fn cancel(&self) {
-        unsafe {
-            let _: () = msg_send![self.dragging_session, endDraggingSession];
-        }
-    }
-}
-
-static SHOULD_CANCEL_DRAG: AtomicBool = AtomicBool::new(false);
-
 pub fn start_drag<W: HasWindowHandle, F: Fn(DragResult, CursorPosition) + Send + 'static>(
     handle: &W,
     item: DragItem,
     image: Image,
     on_drop_callback: F,
     options: Options,
-) -> crate::Result<DragSession> {
+) -> crate::Result<()> {
     if let Ok(RawWindowHandle::AppKit(w)) = handle.window_handle().map(|h| h.as_raw()) {
         unsafe {
             let window: id = msg_send![w.ns_view.as_ptr() as id, window];
@@ -251,13 +237,9 @@ pub fn start_drag<W: HasWindowHandle, F: Fn(DragResult, CursorPosition) + Send +
                             let mode = *this.get_ivar::<DragMode>("drag_mode");
                             let () = msg_send![dragging_session, setAnimatesToStartingPositionsOnCancelOrFail: *animates];
 
-                            if SHOULD_CANCEL_DRAG.load(Ordering::SeqCst) {
-                                0 // NSDragOperationNone
-                            } else {
-                                match mode {
-                                    DragMode::Copy => 1,  // NSDragOperationCopy
-                                    DragMode::Move => 16, // NSDragOperationMove
-                                }
+                            match mode {
+                                DragMode::Copy => 1,  // NSDragOperationCopy
+                                DragMode::Move => 16, // NSDragOperationMove
                             }
                         }
                     }
@@ -309,15 +291,11 @@ pub fn start_drag<W: HasWindowHandle, F: Fn(DragResult, CursorPosition) + Send +
             );
             (*source).set_ivar("drag_mode", options.mode);
 
-            let dragging_session: id = msg_send![ns_view, beginDraggingSessionWithItems: dragging_items event: drag_event source: source];
+            let _: id = msg_send![ns_view, beginDraggingSessionWithItems: dragging_items event: drag_event source: source];
 
-            Ok(DragSession { dragging_session })
+            Ok(())
         }
     } else {
         Err(crate::Error::UnsupportedWindowHandle)
     }
-}
-
-pub fn cancel_drag() {
-    SHOULD_CANCEL_DRAG.store(true, Ordering::SeqCst);
 }
