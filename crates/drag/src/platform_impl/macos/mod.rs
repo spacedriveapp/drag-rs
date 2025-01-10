@@ -291,7 +291,7 @@ pub fn start_drag<W: HasWindowHandle, F: Fn(DragResult, CursorPosition) + Send +
             );
             (*source).set_ivar("drag_mode", options.mode);
 
-            let _: id = msg_send![ns_view, beginDraggingSessionWithItems: dragging_items event: drag_event source: source];
+            let _: () = msg_send![ns_view, beginDraggingSessionWithItems: dragging_items event: drag_event source: source];
 
             Ok(())
         }
