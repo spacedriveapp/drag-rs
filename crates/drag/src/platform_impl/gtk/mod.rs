@@ -26,8 +26,12 @@ pub fn start_drag<F: Fn(DragResult, CursorPosition) + Send + 'static>(
     options: Options,
 ) -> crate::Result<()> {
     let handler_ids: Arc<Mutex<Vec<SignalHandlerId>>> = Arc::new(Mutex::new(vec![]));
+    let drag_action = match options.mode {
+        DragMode::Copy => gdk::DragAction::COPY,
+        DragMode::Move => gdk::DragAction::MOVE,
+    };
 
-    window.drag_source_set(gdk::ModifierType::BUTTON1_MASK, &[], gdk::DragAction::COPY);
+    window.drag_source_set(gdk::ModifierType::BUTTON1_MASK, &[], drag_action);
 
     match item {
         DragItem::Files(paths) => {
@@ -54,7 +58,7 @@ pub fn start_drag<F: Fn(DragResult, CursorPosition) + Send + 'static>(
     if let Some(target_list) = &window.drag_source_get_target_list() {
         if let Some(drag_context) = window.drag_begin_with_coordinates(
             target_list,
-            gdk::DragAction::COPY,
+            drag_action,
             gdk::ffi::GDK_BUTTON1_MASK as i32,
             None,
             -1,
