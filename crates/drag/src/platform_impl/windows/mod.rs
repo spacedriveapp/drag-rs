@@ -4,7 +4,7 @@
 
 use raw_window_handle::{HasWindowHandle, RawWindowHandle};
 
-use crate::{CursorPosition, DragItem, DragResult, Image, Options};
+use crate::{CursorPosition, DragItem, DragMode, DragResult, Image, Options};
 
 use std::{
     ffi::c_void,

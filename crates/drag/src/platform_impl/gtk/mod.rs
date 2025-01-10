@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-License-Identifier: MIT
 
-use crate::{CursorPosition, DragItem, DragResult, Error, Image, Options};
+use crate::{CursorPosition, DragItem, DragMode, DragResult, Error, Image, Options};
 use gdkx11::{
     gdk,
     glib::{ObjectExt, Propagation, SignalHandlerId},
