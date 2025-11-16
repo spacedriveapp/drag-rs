@@ -239,7 +239,7 @@ pub fn start_drag<W: HasWindowHandle, F: Fn(DragResult, CursorPosition) + Send +
                 let drop_source: IDropSource = DropSource::new().into();
 
                 unsafe {
-                    if let Some(drag_image) = get_drag_image(image) {
+                    if let Some(drag_image) = get_drag_image(image, options.icon_size) {
                         if let Ok(helper) =
                             create_instance::<IDragSourceHelper>(&CLSID_DragDropHelper)
                         {
@@ -280,7 +280,7 @@ pub fn start_drag<W: HasWindowHandle, F: Fn(DragResult, CursorPosition) + Send +
                 let drop_source: IDropSource = DummyDropSource::new().into();
 
                 unsafe {
-                    if let Some(drag_image) = get_drag_image(image) {
+                    if let Some(drag_image) = get_drag_image(image, options.icon_size) {
                         if let Ok(helper) =
                             create_instance::<IDragSourceHelper>(&CLSID_DragDropHelper)
                         {
@@ -312,7 +312,7 @@ pub fn start_drag<W: HasWindowHandle, F: Fn(DragResult, CursorPosition) + Send +
     }
 }
 
-fn get_drag_image(image: Image) -> Option<SHDRAGIMAGE> {
+fn get_drag_image(image: Image, icon_size: Option<(u32, u32)>) -> Option<SHDRAGIMAGE> {
     let hbitmap = match image {
         Image::Raw(bytes) => image::read_bytes_to_hbitmap(&bytes).ok(),
         Image::File(path) => image::read_path_to_hbitmap(&path).ok(),
@@ -320,7 +320,10 @@ fn get_drag_image(image: Image) -> Option<SHDRAGIMAGE> {
     hbitmap.map(|hbitmap| unsafe {
         // get image size
         let mut bitmap: BITMAP = BITMAP::default();
-        let (width, height) = if 0
+        let (width, height) = if let Some((w, h)) = icon_size {
+            // Use specified icon size
+            (w as i32, h as i32)
+        } else if 0
             == GetObjectW(
                 hbitmap,
                 std::mem::size_of::<BITMAP>() as i32,
