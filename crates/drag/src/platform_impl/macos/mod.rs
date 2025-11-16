@@ -67,7 +67,8 @@ pub fn start_drag<W: HasWindowHandle, F: Fn(DragResult, CursorPosition) + Send +
             let ns_view: id = msg_send![window, contentView];
 
             let mouse_location: NSPoint = msg_send![window, mouseLocationOutsideOfEventStream];
-            let current_position: NSPoint = msg_send![ns_view, backingAlignedRect: NSRect::new(mouse_location, NSSize::new(0., 0.)) options: NSAlignmentOptions::NSAlignAllEdgesOutward];
+            let rect: NSRect = msg_send![ns_view, backingAlignedRect: NSRect::new(mouse_location, NSSize::new(0., 0.)) options: NSAlignmentOptions::NSAlignAllEdgesOutward];
+            let current_position = rect.origin;
 
             let img: id = msg_send![class!(NSImage), alloc];
             let img: id = match image {
@@ -86,7 +87,15 @@ pub fn start_drag<W: HasWindowHandle, F: Fn(DragResult, CursorPosition) + Send +
                     NSImage::initWithData_(NSImage::alloc(nil), data)
                 }
             };
-            let image_size: NSSize = img.size();
+
+            // Apply icon size if specified in options
+            let image_size: NSSize = if let Some((width, height)) = options.icon_size {
+                let new_size = NSSize::new(width as f64, height as f64);
+                let _: () = msg_send![img, setSize: new_size];
+                new_size
+            } else {
+                img.size()
+            };
             let image_rect = NSRect::new(
                 NSPoint::new(
                     current_position.x - image_size.width / 2.,
@@ -261,7 +270,7 @@ pub fn start_drag<W: HasWindowHandle, F: Fn(DragResult, CursorPosition) + Send +
 
                             let callback_closure =
                                 &*(*callback as *mut Box<dyn Fn(DragResult, CursorPosition)>);
-                                
+
                             if operation == 0 {
                                 // NSDragOperationNone
                                 callback_closure(DragResult::Cancel, mouse_location);
@@ -269,7 +278,7 @@ pub fn start_drag<W: HasWindowHandle, F: Fn(DragResult, CursorPosition) + Send +
                                 callback_closure(DragResult::Dropped, mouse_location);
                             }
 
-                            drop(Box::from_raw(*callback as *mut Box<dyn Fn(DragResult)>));
+                            drop(Box::from_raw(*callback as *mut Box<dyn Fn(DragResult, CursorPosition)>));
                         }
                     }
 

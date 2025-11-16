@@ -163,6 +163,10 @@ unsafe impl objc::Encode for DragMode {
 pub struct Options {
     pub skip_animatation_on_cancel_or_failure: bool,
     pub mode: DragMode,
+    /// Optional icon size (width, height) in pixels.
+    /// If set, the drag preview icon will be scaled to this size.
+    /// If None, the original image size will be used.
+    pub icon_size: Option<(u32, u32)>,
 }
 
 /// An image definition.
